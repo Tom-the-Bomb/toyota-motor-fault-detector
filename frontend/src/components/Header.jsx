@@ -10,9 +10,9 @@ export default function Header({ status, connected, source, modelSource }) {
 
   return (
     <header className="masthead">
-      <div>
+      <div className="mast-title">
         <h1>Motor Fault Detection</h1>
-        <div className="sub">predictive maintenance — arduino telemetry × ml</div>
+        <div className="sub">predictive maintenance · arduino telemetry × ml</div>
       </div>
       <div className="statuses">
         <span className="status" style={{ color: stream.c }}>

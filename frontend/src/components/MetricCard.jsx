@@ -1,5 +1,7 @@
-// One aligned register row: name · fill track · value. No card, no border box.
-export default function MetricCard({ label, unit, value, min = 0, max = 100 }) {
+import Sparkline from './Sparkline'
+
+// One register row: name · inline sparkline · value.
+export default function MetricCard({ label, unit, value, series = [], min = 0, max = 100 }) {
   const v = typeof value === 'number' ? value : null
   const pct = v == null ? 0 : Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100))
   const hot = pct >= 88
@@ -7,7 +9,9 @@ export default function MetricCard({ label, unit, value, min = 0, max = 100 }) {
   return (
     <div className={'reg-row' + (hot ? ' hot' : '')}>
       <span className="reg-name">{label}</span>
-      <span className="reg-track"><span style={{ width: `${pct}%` }} /></span>
+      <span className="reg-spark">
+        <Sparkline data={series} color={hot ? 'var(--fault)' : 'var(--ink)'} />
+      </span>
       <span className="reg-val">
         {v == null ? '——' : fmt(v)}
         <span className="u">{unit}</span>

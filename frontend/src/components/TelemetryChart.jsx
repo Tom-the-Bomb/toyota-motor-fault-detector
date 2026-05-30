@@ -1,14 +1,14 @@
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 
-// Muted, earthy line colors — no neon, no fills, no gradients.
+// Simple, standard line colors.
 const COLORS = {
-  current: '#8fa0b3',
-  temperature: '#c98a5e',
-  rpm: '#9fae7e',
-  torque: '#b07a8f',
-  load: '#bfa46a',
-  vibration: '#a98c7d',
-  voltage: '#7fa0a0',
+  current: '#2563eb',
+  voltage: '#0891b2',
+  temperature: '#ea580c',
+  rpm: '#16a34a',
+  torque: '#7c3aed',
+  load: '#ca8a04',
+  vibration: '#db2777',
 }
 
 export default function TelemetryChart({ history, metricKey, label, unit }) {
@@ -26,13 +26,12 @@ export default function TelemetryChart({ history, metricKey, label, unit }) {
           <LineChart data={data} margin={{ top: 4, right: 2, bottom: 0, left: 0 }}>
             <YAxis hide domain={['auto', 'auto']} />
             <Tooltip
-              cursor={{ stroke: '#423c33', strokeWidth: 1 }}
+              cursor={{ stroke: '#d1d5db', strokeWidth: 1 }}
               contentStyle={{
-                background: '#14120f',
-                border: '1px solid #423c33',
+                background: '#ffffff',
+                border: '1px solid #c9cdd2',
                 borderRadius: 0,
-                fontFamily: 'IBM Plex Mono, monospace',
-                fontSize: 11,
+                fontSize: 12,
                 padding: '4px 8px',
               }}
               labelStyle={{ display: 'none' }}
