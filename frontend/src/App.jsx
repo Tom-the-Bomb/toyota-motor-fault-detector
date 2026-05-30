@@ -5,7 +5,7 @@ import MetricCard from './components/MetricCard'
 import TelemetryChart from './components/TelemetryChart'
 import EventLog from './components/EventLog'
 
-const CHART_METRICS = ['current', 'rpm', 'temperature', 'vibration']
+const CHART_METRICS = ['current', 'voltage']
 
 export default function App() {
   const { status, latest, history, meta, events, source, connected, clearEvents } =

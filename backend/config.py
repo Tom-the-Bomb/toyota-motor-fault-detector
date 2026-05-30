@@ -15,20 +15,17 @@ SERIAL_PORT = os.getenv("SERIAL_PORT") or None
 BAUD_RATE = int(os.getenv("BAUD_RATE", "115200"))
 
 # --- Telemetry schema --------------------------------------------------------
-# The order of fields your Arduino prints when it sends a bare CSV line, e.g.
-#   Serial.println("1.23,12.0,45.6,1450,0.82,62.0,0.31");
-# If your Arduino sends JSON ({"current":1.23,...}) this order is ignored.
-CSV_FIELDS = ["current", "voltage", "temperature", "rpm", "torque", "load", "vibration"]
+# Only signals we can DIRECTLY measure off the motor wires (e.g. an INA219):
+# current and bus voltage. No estimated/derived quantities (torque, load) and
+# no add-on transducers (temp, rpm, vibration).
+#   Serial.println("1.23,12.0");   # current, voltage
+# If your Arduino sends JSON ({"current":1.23,"voltage":12.0}) this order is ignored.
+CSV_FIELDS = ["current", "voltage"]
 
 # Human-friendly metadata for the dashboard (unit + display label + sane range).
 METRICS = {
-    "current":     {"label": "Current",     "unit": "A",   "min": 0,   "max": 6},
-    "voltage":     {"label": "Voltage",     "unit": "V",   "min": 0,   "max": 15},
-    "temperature": {"label": "Temperature", "unit": "°C",  "min": 15,  "max": 90},
-    "rpm":         {"label": "Speed",       "unit": "RPM", "min": 0,   "max": 3000},
-    "torque":      {"label": "Torque",      "unit": "N·m", "min": 0,   "max": 3},
-    "load":        {"label": "Load",        "unit": "%",   "min": 0,   "max": 100},
-    "vibration":   {"label": "Vibration",   "unit": "g",   "min": 0,   "max": 2},
+    "current": {"label": "Current", "unit": "A", "min": 0, "max": 6},
+    "voltage": {"label": "Voltage", "unit": "V", "min": 0, "max": 15},
 }
 
 # --- ML model ----------------------------------------------------------------
@@ -38,7 +35,7 @@ MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(os.path.dirname(__file__), "mo
 # EXACT feature order your model was trained on. The backend builds the feature
 # vector in this order before calling model.predict(). EDIT THIS to match your
 # training columns. If a feature name isn't in the telemetry, it's filled with 0.
-MODEL_FEATURES = ["current", "voltage", "temperature", "rpm", "torque", "load", "vibration"]
+MODEL_FEATURES = ["current", "voltage"]
 
 # Map your model's integer class outputs -> human label shown on the dashboard.
 # For a binary model this is usually {0: "healthy", 1: "fault"}.

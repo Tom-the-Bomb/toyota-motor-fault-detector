@@ -91,27 +91,23 @@ class FaultModel:
 
     def _heuristic(self, t: dict) -> dict:
         """Simple, explainable rule-based stand-in until the real model is dropped
-        in. Scores each signal vs its healthy range and blends into 0..100 health.
-        Mirrors classic stall signatures: current spike + speed drop + heat rise."""
+        in. Uses only directly-measured signals (current, voltage). A DC motor's
+        armature current rises toward its stall current under overload/stall, and
+        the supply voltage tends to sag under that heavy draw.
+
+        NOTE: the thresholds below are placeholders — tune them to YOUR motor's
+        measured no-load and stall currents."""
         cur = float(t.get("current", 0) or 0)
-        rpm = float(t.get("rpm", 0) or 0)
-        temp = float(t.get("temperature", 0) or 0)
-        load = float(t.get("load", 0) or 0)
-        vib = float(t.get("vibration", 0) or 0)
+        volt = float(t.get("voltage", 0) or 0)
 
         penalty = 0.0
         reasons = []
+        # Overcurrent: armature current climbing toward the stall current.
         if cur > 4.0:
-            penalty += (cur - 4.0) * 25; reasons.append("current spike")
-        if temp > 70:
-            penalty += (temp - 70) * 2.0; reasons.append("overheating")
-        if load > 85:
-            penalty += (load - 85) * 1.5; reasons.append("overload")
-        if vib > 1.0:
-            penalty += (vib - 1.0) * 30; reasons.append("vibration")
-        # Stall: high current but motor barely turning.
-        if cur > 3.5 and rpm < 200:
-            penalty += 60; reasons.append("stall")
+            penalty += (cur - 4.0) * 30; reasons.append("overcurrent")
+        # Voltage sag while drawing heavy current — supply struggling / stall.
+        if cur > 3.0 and 0 < volt < 10.0:
+            penalty += 25; reasons.append("voltage sag")
 
         health = max(0, min(100, round(100 - penalty)))
         prob = round(min(1.0, penalty / 100.0), 4)

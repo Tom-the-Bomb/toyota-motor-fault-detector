@@ -82,25 +82,27 @@ fault type.
 
 ## Arduino telemetry format
 
+We graph only what we can **directly measure** off the motor wires with an
+INA219 current/voltage sensor: **current** and **bus voltage**. (Torque and load
+are derived from current, not measured; temp/rpm/vibration need extra
+transducers — all intentionally left out.)
+
 Your sketch just needs to `Serial.println()` one sample per line. The backend
-parser accepts **any** of these (pick the easiest):
+parser accepts either:
 
 | Format | Example |
 |--------|---------|
-| CSV (lightest) | `1.23,12.0,45.6,1450,0.82,62.0,0.31` |
-| JSON | `{"current":1.23,"temperature":45.6,"rpm":1450}` |
-| key=value | `current=1.23 temperature=45.6 rpm=1450` |
+| CSV (lightest) | `1.23,12.04` |
+| JSON | `{"current":1.23,"voltage":12.04}` |
 
-For CSV the column order must match `CSV_FIELDS` in `config.py`:
-`current, voltage, temperature, rpm, torque, load, vibration`.
+For CSV the column order must match `CSV_FIELDS` in `config.py`: `current, voltage`.
 
-A ready-to-edit sketch is in [`backend/arduino_example/motor_telemetry.ino`](backend/arduino_example/motor_telemetry.ino).
-Set the baud rate to match `config.py` (default **115200**), and replace the
-sensor stubs with your real reads.
+A ready-to-flash INA219 sketch is in [`backend/arduino_example/motor_telemetry.ino`](backend/arduino_example/motor_telemetry.ino).
+Set the baud rate to match `config.py` (default **115200**).
 
-> You don't have to send all fields — send what you have. Missing fields are
-> shown as `—` and passed to the model as `0`. Edit `METRICS`/`CSV_FIELDS` in
-> `config.py` to match your motor's signals.
+> Want to add a sensor later (e.g. an encoder for rpm)? Add the field to
+> `CSV_FIELDS` + `METRICS` in `config.py`, append it to the `Serial.print` line,
+> and it shows up automatically.
 
 ---
 

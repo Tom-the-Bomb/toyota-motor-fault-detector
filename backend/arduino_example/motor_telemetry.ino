@@ -1,48 +1,43 @@
 /*
- * Example Arduino sketch: prints motor telemetry the backend understands.
+ * Example Arduino sketch: prints DIRECTLY-MEASURED motor telemetry.
  *
- * The backend's parser accepts THREE formats — pick whichever is easiest:
- *   1) CSV  (lightest):   current,voltage,temperature,rpm,torque,load,vibration
- *   2) JSON:              {"current":1.23,"temperature":45.6,...}
- *   3) key=value:         current=1.23 temperature=45.6 ...
+ * We only send what we can actually measure off the motor wires with an
+ * INA219 current/voltage sensor (I2C): current (A) and bus voltage (V).
+ * No estimated values (torque, load) and no add-on transducers (temp, rpm).
  *
- * The column order for CSV must match config.CSV_FIELDS in the backend:
- *   current, voltage, temperature, rpm, torque, load, vibration
+ * The backend's parser accepts any of these — pick the easiest:
+ *   1) CSV  (lightest):   current,voltage     e.g.  1.23,12.04
+ *   2) JSON:              {"current":1.23,"voltage":12.04}
  *
- * Replace the analogRead()/placeholder math below with your real sensors
- * (e.g. ACS712 current sensor, thermistor, hall-effect tachometer, etc.).
+ * The CSV column order must match config.CSV_FIELDS in the backend:
+ *   current, voltage
  *
+ * Wiring (INA219 breakout):
+ *   INA219 VCC -> 5V,  GND -> GND,  SDA -> A4,  SCL -> A5  (Uno/Nano)
+ *   Motor supply current flows through the INA219 Vin+ / Vin- terminals.
+ *
+ * Library: "Adafruit INA219" (install via Arduino Library Manager).
  * Baud rate must match config.BAUD_RATE (default 115200).
  */
 
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+
+Adafruit_INA219 ina219;
+
 void setup() {
   Serial.begin(115200);
+  ina219.begin();          // defaults to 0x40
 }
 
 void loop() {
-  // --- Read your real sensors here -----------------------------------------
-  float current     = readCurrent();        // Amps   (e.g. ACS712 on A0)
-  float voltage     = 12.0;                  // Volts  (measured or fixed)
-  float temperature = readTemperature();     // °C     (thermistor on A1)
-  float rpm         = readRPM();             // RPM    (hall sensor / encoder)
-  float torque      = current * 0.5;         // N·m    (estimate or sensor)
-  float load        = (current / 6.0) * 100; // %      (current as % of stall)
-  float vibration   = readVibration();       // g      (accelerometer)
+  float current = ina219.getCurrent_mA() / 1000.0;  // A
+  float voltage = ina219.getBusVoltage_V();          // V
 
-  // --- Print one CSV line per sample ---------------------------------------
-  Serial.print(current);     Serial.print(',');
-  Serial.print(voltage);     Serial.print(',');
-  Serial.print(temperature); Serial.print(',');
-  Serial.print(rpm);         Serial.print(',');
-  Serial.print(torque);      Serial.print(',');
-  Serial.print(load);        Serial.print(',');
-  Serial.println(vibration);
+  // One CSV line per sample: current,voltage
+  Serial.print(current, 3);
+  Serial.print(',');
+  Serial.println(voltage, 3);
 
   delay(50); // ~20 samples/sec
 }
-
-// ---- Replace these stubs with your actual sensor reads ----------------------
-float readCurrent()     { return analogRead(A0) * (5.0 / 1023.0); }
-float readTemperature() { return 25.0 + analogRead(A1) * 0.05; }
-float readRPM()         { return 1500.0; }
-float readVibration()   { return 0.25; }
