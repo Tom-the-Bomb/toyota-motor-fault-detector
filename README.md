@@ -31,17 +31,13 @@ the environment from `uv.lock` on first use — no manual venv/activate step.
 
 ```bash
 cd backend
-
-# With the Arduino plugged in (auto-detects the port):
-uv run python app.py
-
-# Force a specific port / baud:
-uv run python app.py --port /dev/cu.usbmodem1101 --baud 115200
+uv run python app.py     # reads the Arduino (port/baud from config.py)
 ```
 
 > Don't have uv? `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-Find your Arduino's serial port:
+The port auto-detects. To pin a specific one, set `SERIAL_PORT` in
+[`config.py`](backend/config.py). Find your Arduino's port:
 - **macOS:** `ls /dev/cu.*` → e.g. `/dev/cu.usbmodem1101`
 - **Linux:** `/dev/ttyACM0` or `/dev/ttyUSB0`
 - **Windows:** `COM3`, `COM4`, …

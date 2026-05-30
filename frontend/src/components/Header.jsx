@@ -1,41 +1,27 @@
-function dot(color) {
-  return <span className="dot" style={{ background: color }} />
-}
-
-export default function Header({ status, connected, source, modelSource, fault }) {
-  const link =
+export default function Header({ status, connected, source, modelSource }) {
+  const stream =
     status === 'open'
       ? connected
-        ? { c: '#2ee6a6', t: 'Live' }
-        : { c: '#f5b342', t: 'Backend up · no device' }
+        ? { c: 'var(--ok)', t: 'live' }
+        : { c: 'var(--muted)', t: 'no device' }
       : status === 'connecting'
-        ? { c: '#f5b342', t: 'Connecting…' }
-        : { c: '#ff5a5a', t: 'Backend offline' }
-
-  const isSim = source === 'SIMULATOR'
+        ? { c: 'var(--muted)', t: 'connecting' }
+        : { c: 'var(--fault)', t: 'offline' }
 
   return (
-    <header className="header">
-      <div className="brand">
-        <div className={'brand-mark' + (fault ? ' fault' : '')}>⚙</div>
-        <div>
-          <h1>Motor Fault Detection</h1>
-          <p>Real-time predictive maintenance · Arduino + ML</p>
-        </div>
+    <header className="masthead">
+      <div>
+        <h1>Motor Fault Detection</h1>
+        <div className="sub">predictive maintenance — arduino telemetry × ml</div>
       </div>
-
-      <div className="status-cluster">
-        <div className="status-pill">
-          {dot(link.c)} <span>{link.t}</span>
-        </div>
-        <div className="status-pill">
-          {dot(isSim ? '#7aa2ff' : '#2ee6a6')}
-          <span>{isSim ? 'Simulator' : source || 'No source'}</span>
-        </div>
-        <div className="status-pill">
-          {dot(modelSource?.startsWith('loaded') ? '#2ee6a6' : '#9aa4b2')}
-          <span>{modelSource?.startsWith('loaded') ? 'ML model' : 'Heuristic model'}</span>
-        </div>
+      <div className="statuses">
+        <span className="status" style={{ color: stream.c }}>
+          <span className="tick" /> {stream.t}
+        </span>
+        <span className="status">{source ? source.toLowerCase() : 'no source'}</span>
+        <span className="status">
+          {modelSource?.startsWith('loaded') ? 'ml model' : 'heuristic'}
+        </span>
       </div>
     </header>
   )

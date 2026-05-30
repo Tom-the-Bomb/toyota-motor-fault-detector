@@ -1,12 +1,10 @@
 import { useTelemetry } from './lib/useTelemetry'
 import Header from './components/Header'
-import HealthGauge from './components/HealthGauge'
 import FaultBanner from './components/FaultBanner'
 import MetricCard from './components/MetricCard'
 import TelemetryChart from './components/TelemetryChart'
 import EventLog from './components/EventLog'
 
-// Which metrics to show as charts (the rest render as compact tiles).
 const CHART_METRICS = ['current', 'rpm', 'temperature', 'vibration']
 
 export default function App() {
@@ -15,82 +13,113 @@ export default function App() {
 
   const metrics = meta?.metrics || {}
   const telemetry = latest?.telemetry || {}
-  const fault = latest?.prediction === 'fault'
   const metricKeys = Object.keys(metrics)
-
-  const offline = status !== 'open'
+  const health = latest?.health ?? 100
+  const prob = latest?.probability
+  const isFault = latest?.prediction === 'fault'
 
   return (
-    <div className={'app' + (fault ? ' app-fault' : '')}>
+    <div className="page">
       <Header
         status={status}
         connected={connected}
         source={source}
         modelSource={meta?.model_source}
-        fault={fault}
       />
 
-      {offline && (
-        <div className="offline-bar">
-          Waiting for backend at <code>ws://localhost:8000/ws</code> — start it with{' '}
-          <code>python app.py --sim</code> (or with the Arduino plugged in).
+      {status !== 'open' && (
+        <div className="offline">
+          waiting for backend at ws://localhost:8000/ws — start it with{' '}
+          <code>uv run python app.py</code>
         </div>
       )}
 
-      <FaultBanner latest={latest} meta={meta} />
+      <FaultBanner latest={latest} />
 
-      <main className="grid">
-        <section className="panel gauge-panel">
-          <div className="panel-head"><span>Motor Health</span></div>
-          <HealthGauge health={latest?.health ?? 100} prediction={latest?.prediction} />
-          <div className="gauge-foot">
+      {/* hero readout */}
+      <div className="readout">
+        <div className="health-block">
+          <span className="label">Motor health index</span>
+          <div className="health-figure">
+            <span
+              className="health-num"
+              style={{ color: isFault ? 'var(--fault)' : 'var(--ink)' }}
+            >
+              {Math.round(health)}
+            </span>
+            <span className="health-of">/ 100</span>
+          </div>
+          <div className="bar">
+            <span
+              style={{
+                width: `${Math.max(0, Math.min(100, health))}%`,
+                background: isFault ? 'var(--fault)' : 'var(--ok)',
+              }}
+            />
+          </div>
+          <span className="readout-meta">
             {latest
               ? `${history.length} samples · ${meta?.model_source || 'model'}`
-              : 'Awaiting telemetry…'}
+              : 'awaiting telemetry'}
+          </span>
+        </div>
+
+        <div className="prob-block">
+          <span className="label">Fault probability</span>
+          <div className="prob-figure">
+            {prob != null ? (prob * 100).toFixed(1) : '—'}
+            <small>%</small>
           </div>
-        </section>
+          <span className="readout-meta">
+            {connected ? `source · ${source || 'unknown'}` : 'device not connected'}
+          </span>
+        </div>
+      </div>
 
-        <section className="panel metrics-panel">
-          <div className="panel-head"><span>Live Telemetry</span></div>
-          <div className="metric-grid">
-            {metricKeys.length === 0 && (
-              <div className="event-empty">No metrics yet…</div>
-            )}
-            {metricKeys.map((k) => (
-              <MetricCard
-                key={k}
-                label={metrics[k].label}
-                unit={metrics[k].unit}
-                value={telemetry[k]}
-                min={metrics[k].min}
-                max={metrics[k].max}
-              />
-            ))}
-          </div>
-        </section>
+      {/* metrics register */}
+      <section className="section">
+        <div className="section-head">
+          <span className="label">Live telemetry</span>
+          <span className="count">{metricKeys.length} channels</span>
+        </div>
+        <div className="register">
+          {metricKeys.map((k) => (
+            <MetricCard
+              key={k}
+              label={metrics[k].label}
+              unit={metrics[k].unit}
+              value={telemetry[k]}
+              min={metrics[k].min}
+              max={metrics[k].max}
+            />
+          ))}
+        </div>
+      </section>
 
-        <EventLog events={events} onClear={clearEvents} />
+      {/* signal history */}
+      <section className="section">
+        <div className="section-head">
+          <span className="label">Signal history</span>
+          <span className="count">{history.length} pts</span>
+        </div>
+        <div className="signals">
+          {CHART_METRICS.filter((k) => metrics[k]).map((k) => (
+            <TelemetryChart
+              key={k}
+              history={history}
+              metricKey={k}
+              label={metrics[k].label}
+              unit={metrics[k].unit}
+            />
+          ))}
+        </div>
+      </section>
 
-        <section className="panel charts-panel">
-          <div className="panel-head"><span>Signal History</span></div>
-          <div className="chart-grid">
-            {CHART_METRICS.filter((k) => metrics[k]).map((k) => (
-              <TelemetryChart
-                key={k}
-                history={history}
-                metricKey={k}
-                label={metrics[k].label}
-                unit={metrics[k].unit}
-              />
-            ))}
-          </div>
-        </section>
-      </main>
+      <EventLog events={events} onClear={clearEvents} />
 
-      <footer className="footer">
-        Motor Fault Detection Dashboard · {connected ? 'device connected' : 'no device'} ·
-        {' '}stream {status}
-      </footer>
+      <div className="colophon">
+        motor fault detection · {connected ? 'device connected' : 'no device'} · stream {status}
+      </div>
     </div>
   )
 }

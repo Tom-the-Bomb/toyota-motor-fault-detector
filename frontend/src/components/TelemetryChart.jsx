@@ -1,76 +1,53 @@
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 
+// Muted, earthy line colors — no neon, no fills, no gradients.
 const COLORS = {
-  current: '#7aa2ff',
-  temperature: '#ff8a5a',
-  rpm: '#2ee6a6',
-  torque: '#c98aff',
-  load: '#f5b342',
-  vibration: '#ff5a8a',
-  voltage: '#5ad1ff',
+  current: '#8fa0b3',
+  temperature: '#c98a5e',
+  rpm: '#9fae7e',
+  torque: '#b07a8f',
+  load: '#bfa46a',
+  vibration: '#a98c7d',
+  voltage: '#7fa0a0',
 }
 
-// `metricKey` selects which telemetry field to plot from each history sample.
-export default function TelemetryChart({ history, metricKey, label, unit, faultMarks = true }) {
-  const color = COLORS[metricKey] || '#7aa2ff'
-  const data = history.map((s, i) => ({
-    i,
-    value: s.telemetry?.[metricKey] ?? null,
-    fault: s.prediction === 'fault',
-  }))
+export default function TelemetryChart({ history, metricKey, label, unit }) {
+  const color = COLORS[metricKey] || 'var(--muted)'
+  const data = history.map((s, i) => ({ i, value: s.telemetry?.[metricKey] ?? null }))
 
   return (
-    <div className="chart-card">
-      <div className="chart-head">
-        <span className="chart-title">{label}</span>
-        <span className="chart-unit">{unit}</span>
+    <div>
+      <div className="signal-title">
+        <span className="name">{label}</span>
+        <span className="u">{unit}</span>
       </div>
-      <div className="chart-body">
+      <div className="signal-plot">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: -18 }}>
-            <defs>
-              <linearGradient id={`g-${metricKey}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#1e2633" vertical={false} />
-            <XAxis dataKey="i" hide />
-            <YAxis
-              width={44}
-              tick={{ fill: '#7c8595', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              domain={['auto', 'auto']}
-            />
+          <LineChart data={data} margin={{ top: 4, right: 2, bottom: 0, left: 0 }}>
+            <YAxis hide domain={['auto', 'auto']} />
             <Tooltip
+              cursor={{ stroke: '#423c33', strokeWidth: 1 }}
               contentStyle={{
-                background: '#121821',
-                border: '1px solid #263041',
-                borderRadius: 8,
-                fontSize: 12,
+                background: '#14120f',
+                border: '1px solid #423c33',
+                borderRadius: 0,
+                fontFamily: 'IBM Plex Mono, monospace',
+                fontSize: 11,
+                padding: '4px 8px',
               }}
               labelStyle={{ display: 'none' }}
-              formatter={(val) => [`${Number(val).toFixed(2)} ${unit}`, label]}
+              formatter={(val) => [`${Number(val).toFixed(2)} ${unit}`, null]}
+              separator=""
             />
-            <Area
+            <Line
               type="monotone"
               dataKey="value"
               stroke={color}
-              strokeWidth={2}
-              fill={`url(#g-${metricKey})`}
-              isAnimationActive={false}
+              strokeWidth={1.5}
               dot={false}
+              isAnimationActive={false}
             />
-          </AreaChart>
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </div>

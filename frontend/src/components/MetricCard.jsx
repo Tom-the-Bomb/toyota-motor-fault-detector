@@ -1,21 +1,17 @@
-// Compact live metric tile with a value, unit, and a fill bar vs its range.
+// One aligned register row: name · fill track · value. No card, no border box.
 export default function MetricCard({ label, unit, value, min = 0, max = 100 }) {
   const v = typeof value === 'number' ? value : null
   const pct = v == null ? 0 : Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100))
-
-  // Warn/critical tint when a metric is near the top of its range.
-  const tone = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : 'ok'
+  const hot = pct >= 88
 
   return (
-    <div className={'metric-card tone-' + tone}>
-      <div className="metric-top">
-        <span className="metric-label">{label}</span>
-        <span className="metric-unit">{unit}</span>
-      </div>
-      <div className="metric-value">{v == null ? '—' : fmt(v)}</div>
-      <div className="metric-bar">
-        <div className="metric-bar-fill" style={{ width: `${pct}%` }} />
-      </div>
+    <div className={'reg-row' + (hot ? ' hot' : '')}>
+      <span className="reg-name">{label}</span>
+      <span className="reg-track"><span style={{ width: `${pct}%` }} /></span>
+      <span className="reg-val">
+        {v == null ? '——' : fmt(v)}
+        <span className="u">{unit}</span>
+      </span>
     </div>
   )
 }

@@ -4,13 +4,10 @@ Pipeline:  Arduino (UART) ─▶ SerialReader ─▶ FaultModel.predict() ─▶
                                                                           │
                           React frontend ◀── WebSocket /ws ◀──────────────┘
 
-Run:
-    python app.py            # auto-detect Arduino serial port
-    python app.py --port /dev/cu.usbmodem1101   # force a specific port
+Run:  python app.py   (port/baud come from config.py)
 """
 from __future__ import annotations
 
-import argparse
 import collections
 import json
 import threading
@@ -97,19 +94,10 @@ def ws(ws):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Motor fault detection backend")
-    parser.add_argument("--port", help="serial port (overrides config / auto-detect)")
-    parser.add_argument("--baud", type=int, help="baud rate")
-    args = parser.parse_args()
-
     print("[backend] Reading from serial. Available ports:")
     for dev, desc in list_serial_ports():
         print(f"    {dev}  —  {desc}")
-    state.reader = SerialReader(
-        on_reading=state.ingest,
-        port=args.port or config.SERIAL_PORT,
-        baud=args.baud or config.BAUD_RATE,
-    )
+    state.reader = SerialReader(on_reading=state.ingest)
     state.reader.start()
 
     print(f"[backend] Model: {state.model.source}")
