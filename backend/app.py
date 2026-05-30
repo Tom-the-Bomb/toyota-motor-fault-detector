@@ -6,7 +6,6 @@ Pipeline:  Arduino (UART) ─▶ SerialReader ─▶ FaultModel.predict() ─▶
 
 Run:
     python app.py            # auto-detect Arduino serial port
-    python app.py --sim      # no hardware: stream simulated telemetry
     python app.py --port /dev/cu.usbmodem1101   # force a specific port
 """
 from __future__ import annotations
@@ -22,7 +21,7 @@ from flask_sock import Sock
 
 import config
 from model import FaultModel
-from serial_reader import SerialReader, Simulator, list_serial_ports
+from serial_reader import SerialReader, list_serial_ports
 
 
 class DashboardState:
@@ -97,29 +96,20 @@ def ws(ws):
         time.sleep(period)
 
 
-def build_reader(args):
-    """Create the telemetry source (real serial port or the simulator)."""
-    if args.sim:
-        print("[backend] Starting in SIMULATOR mode (no hardware needed).")
-        return Simulator(on_reading=state.ingest, hz=config.STREAM_HZ)
-    print("[backend] Starting in SERIAL mode. Available ports:")
-    for dev, desc in list_serial_ports():
-        print(f"    {dev}  —  {desc}")
-    return SerialReader(
-        on_reading=state.ingest,
-        port=args.port or config.SERIAL_PORT,
-        baud=args.baud or config.BAUD_RATE,
-    )
-
-
 def main():
     parser = argparse.ArgumentParser(description="Motor fault detection backend")
-    parser.add_argument("--sim", action="store_true", help="use the simulator (no hardware)")
     parser.add_argument("--port", help="serial port (overrides config / auto-detect)")
     parser.add_argument("--baud", type=int, help="baud rate")
     args = parser.parse_args()
 
-    state.reader = build_reader(args)
+    print("[backend] Reading from serial. Available ports:")
+    for dev, desc in list_serial_ports():
+        print(f"    {dev}  —  {desc}")
+    state.reader = SerialReader(
+        on_reading=state.ingest,
+        port=args.port or config.SERIAL_PORT,
+        baud=args.baud or config.BAUD_RATE,
+    )
     state.reader.start()
 
     print(f"[backend] Model: {state.model.source}")

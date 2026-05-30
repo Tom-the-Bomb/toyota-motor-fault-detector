@@ -14,7 +14,7 @@ Motor ──USB/UART──> Arduino ──serial──> Flask backend ──WebS
 
 - **Flask backend** (`backend/`) — reads telemetry from the Arduino over UART,
   runs your exported Colab model on every sample, and broadcasts predictions on
-  a WebSocket. Includes a **simulator** so it runs with no hardware.
+  a WebSocket.
 - **React dashboard** (`frontend/`) — health gauge, fault banner, live metric
   tiles, signal-history charts, and a fault-event log. Auto-reconnects.
 
@@ -31,9 +31,6 @@ the environment from `uv.lock` on first use — no manual venv/activate step.
 
 ```bash
 cd backend
-
-# No hardware yet? Run the simulator — the dashboard fills with live data:
-uv run python app.py --sim
 
 # With the Arduino plugged in (auto-detects the port):
 uv run python app.py
@@ -123,12 +120,3 @@ Everything tunable lives in `backend/config.py` (also overridable via env vars):
 | `MODEL_FEATURES`, `CLASS_LABELS` | how telemetry maps to your model |
 | `FAULT_THRESHOLD` | probability above which a fault alert fires |
 | `STREAM_HZ` | max WebSocket push rate |
-
----
-
-## Demo tips
-
-- Start with `python app.py --sim` to prove the whole pipeline works — the
-  simulator auto-injects stall/overheat episodes every ~20s so the fault banner,
-  alerts, and charts all light up on their own.
-- Then switch to the real Arduino with `python app.py`.
