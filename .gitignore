@@ -1,8 +1,9 @@
-# Python
-backend/venv/
+# Python (uv)
+backend/.venv/
 __pycache__/
 *.pyc
 backend/model.pkl
+# note: uv.lock IS committed (reproducible installs)
 
 # Node
 frontend/node_modules/

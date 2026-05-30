@@ -26,21 +26,23 @@ You need **two terminals** (backend + frontend).
 
 ### 1. Backend
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/). `uv run` creates
+the environment from `uv.lock` on first use — no manual venv/activate step.
+
 ```bash
 cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 
 # No hardware yet? Run the simulator — the dashboard fills with live data:
-python app.py --sim
+uv run python app.py --sim
 
 # With the Arduino plugged in (auto-detects the port):
-python app.py
+uv run python app.py
 
 # Force a specific port / baud:
-python app.py --port /dev/cu.usbmodem1101 --baud 115200
+uv run python app.py --port /dev/cu.usbmodem1101 --baud 115200
 ```
+
+> Don't have uv? `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 Find your Arduino's serial port:
 - **macOS:** `ls /dev/cu.*` → e.g. `/dev/cu.usbmodem1101`
@@ -121,17 +123,6 @@ Everything tunable lives in `backend/config.py` (also overridable via env vars):
 | `MODEL_FEATURES`, `CLASS_LABELS` | how telemetry maps to your model |
 | `FAULT_THRESHOLD` | probability above which a fault alert fires |
 | `STREAM_HZ` | max WebSocket push rate |
-
----
-
-## API (if you want to integrate elsewhere)
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/health` | backend status, model source, serial ports, sample count |
-| `GET /api/latest` | most recent sample + prediction |
-| `GET /api/history` | recent samples (ring buffer) |
-| `WS  /ws` | live stream: a `meta` frame on connect, then `sample` frames |
 
 ---
 
