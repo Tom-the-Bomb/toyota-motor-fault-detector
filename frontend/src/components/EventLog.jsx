@@ -7,8 +7,8 @@ function clock(t) {
 
 export default function EventLog({ events, onClear }) {
   return (
-    <section className="section">
-      <div className="section-head">
+    <section className="module">
+      <div className="module-head">
         <span className="label">Fault log</span>
         {events.length > 0
           ? <button className="clear" onClick={onClear}>clear</button>

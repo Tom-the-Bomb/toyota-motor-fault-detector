@@ -1,11 +1,11 @@
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 
-// Simple, standard line colors.
+// Monochrome control-panel ink, with one accent for the second channel.
 const COLORS = {
-  current: '#2563eb',
-  voltage: '#0891b2',
+  current: '#111317',
+  voltage: '#2563eb',
   temperature: '#ea580c',
-  rpm: '#16a34a',
+  rpm: '#15803d',
   torque: '#7c3aed',
   load: '#ca8a04',
   vibration: '#db2777',

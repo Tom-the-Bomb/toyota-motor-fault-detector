@@ -1,14 +1,15 @@
 :root {
-  /* minimal, sharp, neutral — white ground, hairline rules, one accent */
-  --bg: #ffffff;
+  --bg: #f0f1f3;        /* page ground, slightly off-white so the panel reads as a sheet */
+  --panel: #ffffff;
   --ink: #111317;
   --muted: #6b7280;
   --faint: #9ca3af;
-  --rule: #e6e8eb;
-  --rule-strong: #c9cdd2;
+  --rule: #e3e5e8;      /* hairline divider */
+  --rule-strong: #111317;
   --ok: #15803d;
   --fault: #dc2626;
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -24,220 +25,176 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-code {
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 0.88em;
-}
+code { font-family: var(--mono); font-size: 0.85em; }
 
-/* small technical label */
+/* technical label */
 .label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   color: var(--faint);
 }
 
 .page {
-  max-width: 1040px;
+  max-width: 1060px;
   margin: 0 auto;
-  padding: 48px 40px 96px;
+  padding: 44px 40px 72px;
 }
+
+/* ---------- The frame ---------- */
+.panel {
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+}
+/* every module is a horizontal band divided by hairlines */
+.panel > * { border-bottom: 1px solid var(--rule); }
+.panel > *:last-child { border-bottom: none; }
 
 /* ---------- Masthead ---------- */
 .masthead {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid var(--ink);
+  gap: 24px;
+  padding: 20px 26px;
+  border-bottom: 1.5px solid var(--ink) !important;
 }
 .masthead h1 {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0;
   line-height: 1;
 }
-.masthead .sub {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 8px;
-}
-.statuses {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
+.masthead .sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.statuses { display: flex; align-items: center; gap: 20px; }
 .status {
-  font-size: 12.5px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
   color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 7px;
+  text-transform: uppercase;
 }
-.status .tick {
-  width: 7px; height: 7px;
-  background: currentColor;
-  display: inline-block;
-}
+.status .tick { width: 7px; height: 7px; background: currentColor; display: inline-block; }
 
 .offline {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--fault);
-  padding: 14px 0;
-  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  padding: 12px 26px;
+  background: #fff5f5;
 }
 
-/* ---------- Verdict (fault / healthy) ---------- */
-.verdict {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding: 26px 0;
-  border-bottom: 1px solid var(--rule);
-}
-.verdict .mark { font-size: 14px; color: var(--faint); }
-.verdict.ok .mark { color: var(--ok); }
-.verdict.bad .mark { color: var(--fault); }
-.verdict .word { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
-.verdict.ok .word { color: var(--ok); }
-.verdict.bad .word { color: var(--fault); }
-.verdict .detail {
-  font-size: 13px;
-  color: var(--muted);
-  margin-left: auto;
-}
-
-/* ---------- Hero readout: health + probability ---------- */
-.readout {
+/* ---------- Hero: verdict | health | fault prob (3 cells, vertical rules) ---------- */
+.hero {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 64px;
-  padding: 56px 0;
-  border-bottom: 1px solid var(--rule);
+  grid-template-columns: 1.1fr 1.4fr;
 }
-.health-block { display: flex; flex-direction: column; gap: 18px; }
-.health-figure { display: flex; align-items: baseline; gap: 12px; }
-.health-num {
-  font-size: 116px;
-  font-weight: 300;
-  line-height: 0.85;
-  letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-}
-.health-of { font-size: 16px; color: var(--faint); }
-.bar {
-  height: 3px;
-  background: var(--rule);
-  position: relative;
-}
-.bar > span {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  background: var(--ink);
-  transition: width 0.5s ease, background 0.5s;
-}
-.readout-meta { font-size: 12.5px; color: var(--faint); }
+.hero-verdict { padding: 28px 26px; display: flex; flex-direction: column; gap: 10px; }
+.hero-verdict .verdict-word { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+.hero-verdict.ok .verdict-word { color: var(--ok); }
+.hero-verdict.bad .verdict-word { color: var(--fault); }
+.verdict-detail { font-size: 13px; color: var(--muted); }
 
-.prob-block { display: flex; flex-direction: column; gap: 16px; justify-content: flex-end; }
-.prob-figure {
-  font-size: 60px;
-  font-weight: 300;
+.hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-left: 1px solid var(--rule);
+}
+.stat { padding: 28px 26px; display: flex; flex-direction: column; gap: 14px; }
+.stat + .stat { border-left: 1px solid var(--rule); }
+.stat-num {
+  font-family: var(--mono);
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 0.9;
   letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
 }
-.prob-figure small { font-size: 22px; color: var(--faint); margin-left: 3px; }
+.stat-of { font-size: 18px; color: var(--faint); margin-left: 4px; letter-spacing: 0; }
+.bar { height: 3px; background: var(--rule); position: relative; }
+.bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); transition: width 0.5s ease, background 0.5s; }
+.readout-meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; }
 
-/* ---------- Section scaffolding ---------- */
-.section { padding: 48px 0; border-bottom: 1px solid var(--rule); }
-.section-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 24px;
-}
-.section-head .count { font-size: 11px; color: var(--faint); letter-spacing: 0.08em; }
+/* ---------- Modules ---------- */
+.module { padding: 22px 26px 26px; }
+.module-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.module-head .count { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
 
-/* ---------- Metrics register (aligned rows, no boxes) ---------- */
+/* ---------- Telemetry register (name · sparkline · value) ---------- */
 .register { display: flex; flex-direction: column; }
 .reg-row {
   display: grid;
-  grid-template-columns: 170px 1fr auto;
+  grid-template-columns: 150px 1fr 150px;
   align-items: center;
-  gap: 24px;
-  padding: 15px 0;
+  gap: 28px;
+  padding: 14px 0;
   border-top: 1px solid var(--rule);
 }
 .reg-row:first-child { border-top: none; }
-.reg-name { font-size: 15px; color: var(--ink); }
-.reg-track { height: 2px; background: var(--rule); position: relative; }
-.reg-track > span {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  background: var(--muted); transition: width 0.4s;
-}
-.reg-row.hot .reg-track > span { background: var(--fault); }
+.reg-name { font-size: 15px; }
+.reg-spark { height: 30px; }
+.spark { width: 100%; height: 30px; display: block; }
 .reg-val {
-  font-size: 17px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 500;
   text-align: right;
+  letter-spacing: -0.01em;
 }
-.reg-val .u { color: var(--faint); font-size: 12px; margin-left: 6px; font-weight: 400; }
+.reg-val .u { color: var(--faint); font-size: 12px; margin-left: 7px; }
+.reg-row.hot .reg-val { color: var(--fault); }
 
-/* ---------- Signal charts (thin lines, no fill, no box) ---------- */
-.signals {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 40px 56px;
-}
-.signal-title {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 12px;
-}
-.signal-title .name { font-size: 14px; font-weight: 500; }
-.signal-title .u { font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
-.signal-plot { height: 104px; }
+/* ---------- Signal charts ---------- */
+.signals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 40px; }
+.signal-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.signal-title .name { font-size: 13px; font-weight: 500; }
+.signal-title .u { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.06em; }
+.signal-plot { height: 108px; border-left: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
 
-/* ---------- Event log ---------- */
+/* ---------- Fault log ---------- */
 .log-list { display: flex; flex-direction: column; }
-.log-empty { font-size: 13px; color: var(--faint); }
+.log-empty { font-family: var(--mono); font-size: 12.5px; color: var(--faint); }
 .log-row {
   display: grid;
   grid-template-columns: 110px 1fr auto;
   gap: 24px;
   align-items: center;
-  padding: 13px 0;
+  padding: 12px 0;
   border-top: 1px solid var(--rule);
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 12.5px;
 }
 .log-row:first-child { border-top: none; }
 .log-row .when { color: var(--faint); }
-.log-row .what { color: var(--fault); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
-.log-row .vals { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.log-row .what { color: var(--fault); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.log-row .vals { color: var(--muted); text-align: right; }
 .clear {
   background: none; border: none; color: var(--ink);
-  font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
   cursor: pointer; padding: 0;
 }
 .clear:hover { color: var(--fault); }
 
 .colophon {
+  font-family: var(--mono);
   font-size: 11px;
   color: var(--faint);
   letter-spacing: 0.06em;
-  padding-top: 28px;
+  text-transform: uppercase;
+  padding-top: 16px;
+  text-align: right;
 }
 
 @media (max-width: 760px) {
-  .page { padding: 32px 20px 64px; }
-  .readout { grid-template-columns: 1fr; gap: 40px; padding: 40px 0; }
-  .signals { grid-template-columns: 1fr; gap: 36px; }
-  .health-num { font-size: 84px; }
-  .reg-row { grid-template-columns: 1fr auto; }
-  .reg-track { display: none; }
+  .page { padding: 28px 16px 56px; }
+  .masthead { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-stats { border-left: none; border-top: 1px solid var(--rule); }
+  .signals { grid-template-columns: 1fr; gap: 28px; }
+  .stat-num { font-size: 44px; }
+  .reg-row { grid-template-columns: 110px 1fr auto; gap: 16px; }
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
