@@ -1,7 +1,10 @@
 """Central configuration for the motor-fault backend.
 
-Everything you might want to tweak for your specific motor/Arduino lives here.
-Values can be overridden with environment variables (see README).
+The fault model is a PyTorch LSTM autoencoder that watches a single signal —
+the motor's **current draw** — and flags anomalies (see model/ml.py). Low/idle
+current is "normal"; sustained elevated current is the anomaly. Everything you
+might want to tweak for your motor/Arduino lives here; values can be overridden
+with environment variables.
 """
 import os
 
@@ -15,41 +18,29 @@ SERIAL_PORT = os.getenv("SERIAL_PORT") or None
 BAUD_RATE = int(os.getenv("BAUD_RATE", "115200"))
 
 # --- Telemetry schema --------------------------------------------------------
-# The order of fields your Arduino prints when it sends a bare CSV line, e.g.
-#   Serial.println("1.23,12.0,45.6,1450,0.82,62.0,0.31");
-# If your Arduino sends JSON ({"current":1.23,...}) this order is ignored.
-CSV_FIELDS = ["current", "voltage", "temperature", "rpm", "torque", "load", "vibration"]
+# The model only needs the motor current (amps). Your sketch should print one
+# reading per line — either the bare current value (`0.0032`) or, matching the
+# reference sketch, `time_us,current` (`12345,0.0032`); the parser takes the
+# current from the last numeric field. JSON ({"current":0.0032}) also works.
+CSV_FIELDS = ["current"]
 
-# Human-friendly metadata for the dashboard (unit + display label + sane range).
+# Human-friendly metadata for the dashboard (label + unit + range + display
+# precision). `current` is the model input; `current_rise` and `error` are the
+# detector's own internals, surfaced so the dashboard shows what it acts on.
 METRICS = {
-    "current":     {"label": "Current",     "unit": "A",   "min": 0,   "max": 6},
-    "voltage":     {"label": "Voltage",     "unit": "V",   "min": 0,   "max": 15},
-    "temperature": {"label": "Temperature", "unit": "°C",  "min": 15,  "max": 90},
-    "rpm":         {"label": "Speed",       "unit": "RPM", "min": 0,   "max": 3000},
-    "torque":      {"label": "Torque",      "unit": "N·m", "min": 0,   "max": 3},
-    "load":        {"label": "Load",        "unit": "%",   "min": 0,   "max": 100},
-    "vibration":   {"label": "Vibration",   "unit": "g",   "min": 0,   "max": 2},
+    "current":      {"label": "Current",      "unit": "A", "min": 0.0,   "max": 0.05,  "decimals": 4},
+    "current_rise": {"label": "Current Rise", "unit": "A", "min": -0.02, "max": 0.05,  "decimals": 4},
+    "error":        {"label": "Recon. Error", "unit": "",  "min": 0.0,   "max": 0.008, "decimals": 5},
 }
-
-# --- ML model ----------------------------------------------------------------
-# Path to the model you exported from Colab (joblib.dump / pickle).
-MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(os.path.dirname(__file__), "model.pkl"))
-
-# EXACT feature order your model was trained on. The backend builds the feature
-# vector in this order before calling model.predict(). EDIT THIS to match your
-# training columns. If a feature name isn't in the telemetry, it's filled with 0.
-MODEL_FEATURES = ["current", "voltage", "temperature", "rpm", "torque", "load", "vibration"]
-
-# Map your model's integer class outputs -> human label shown on the dashboard.
-# For a binary model this is usually {0: "healthy", 1: "fault"}.
-CLASS_LABELS = {0: "healthy", 1: "fault"}
-
-# Probability above which we raise a FAULT alert (only used if model exposes
-# predict_proba). Tune for your precision/recall trade-off.
-FAULT_THRESHOLD = float(os.getenv("FAULT_THRESHOLD", "0.5"))
 
 # --- Server ------------------------------------------------------------------
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 STREAM_HZ = float(os.getenv("STREAM_HZ", "20"))  # max websocket push rate
 HISTORY_LEN = int(os.getenv("HISTORY_LEN", "600"))  # readings kept for new clients
+
+# --- Simulator ---------------------------------------------------------------
+# Used by `python app.py --sim` (or when no Arduino is found). Emits current
+# that idles in the healthy band and periodically rises into the fault band, so
+# the dashboard cycles between NOMINAL and FAULT against the real model.
+SIM_HZ = float(os.getenv("SIM_HZ", "30"))  # simulated samples per second

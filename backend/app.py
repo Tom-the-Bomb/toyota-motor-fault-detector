@@ -1,13 +1,4 @@
-"""Flask backend for the motor-fault dashboard.
 
-Pipeline:  Arduino (UART) ─▶ SerialReader ─▶ FaultModel.predict() ─▶ DashboardState
-                                                                          │
-                          React frontend ◀── WebSocket /ws ◀──────────────┘
-
-Run:
-    python app.py            # auto-detect Arduino serial port
-    python app.py --port /dev/cu.usbmodem1101   # force a specific port
-"""
 from __future__ import annotations
 
 import argparse

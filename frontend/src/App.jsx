@@ -7,7 +7,7 @@ import TelemetryChart from './components/TelemetryChart'
 import EventLog from './components/EventLog'
 
 // Which metrics to show as charts (the rest render as compact tiles).
-const CHART_METRICS = ['current', 'rpm', 'temperature', 'vibration']
+const CHART_METRICS = ['current', 'error']
 
 export default function App() {
   const { status, latest, history, meta, events, source, connected, clearEvents } =
@@ -64,6 +64,7 @@ export default function App() {
                 value={telemetry[k]}
                 min={metrics[k].min}
                 max={metrics[k].max}
+                decimals={metrics[k].decimals}
               />
             ))}
           </div>
@@ -81,6 +82,8 @@ export default function App() {
                 metricKey={k}
                 label={metrics[k].label}
                 unit={metrics[k].unit}
+                decimals={metrics[k].decimals}
+                threshold={k === 'error' ? meta?.threshold : undefined}
               />
             ))}
           </div>

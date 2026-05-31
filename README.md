@@ -1,22 +1,29 @@
 # Motor Fault Detection — Live Dashboard
 
-Real-time predictive-maintenance dashboard for a motor monitored by an Arduino,
-with a Python (Flask) backend that runs your trained ML model and streams
-fault predictions to a React frontend over WebSocket.
+Real-time predictive-maintenance dashboard for a motor monitored by an Arduino.
+A Python (Flask) backend reads the motor's **current** over UART, runs a trained
+**PyTorch LSTM autoencoder** that flags anomalous current patterns, and streams
+predictions to a React dashboard over WebSocket.
 
 ```
 Motor ──USB/UART──> Arduino ──serial──> Flask backend ──WebSocket──> React dashboard
-                              (telemetry)  (pyserial + ML model)        (live charts,
-                                                                          fault alerts)
+                              (current)   (LSTM autoencoder)            (live charts,
+                                                                         fault alerts)
 ```
 
-## What you get
+## How the model works
 
-- **Flask backend** (`backend/`) — reads telemetry from the Arduino over UART,
-  runs your exported Colab model on every sample, and broadcasts predictions on
-  a WebSocket.
-- **React dashboard** (`frontend/`) — health gauge, fault banner, live metric
-  tiles, signal-history charts, and a fault-event log. Auto-reconnects.
+The detector watches a single signal — motor **current** (amps). It keeps a
+rolling baseline of recent current, derives `current_rise = current − baseline`,
+scales both channels, and feeds a sliding window of 50 samples to the
+autoencoder. A high **reconstruction error** (above `0.001201`) means the current
+pattern is unlike the low/idle data the model was trained on — i.e. a fault.
+In practice the decision knee sits around **~5.5 mA**: idle current reads as
+healthy, sustained higher draw reads as a fault.
+
+The model lives in [`backend/model/`](backend/model/):
+`ml.py` (architecture + online detector + offline batch demo),
+`lstm_autoencoder.pth`, and the two `scaler_*.pkl` files.
 
 ---
 
@@ -26,13 +33,17 @@ You need **two terminals** (backend + frontend).
 
 ### 1. Backend
 
-Dependencies are managed with [uv](https://docs.astral.sh/uv/). `uv run` creates
-the environment from `uv.lock` on first use — no manual venv/activate step.
+Dependencies are managed with [uv](https://docs.astral.sh/uv/). The project pins
+**Python 3.13** (PyTorch has no 3.14 wheels yet); `uv run` builds the
+environment from `uv.lock` on first use — no manual venv/activate step.
 
 ```bash
 cd backend
 
-# With the Arduino plugged in (auto-detects the port):
+# No hardware? Run the built-in simulator (cycles healthy <-> fault):
+uv run python app.py --sim
+
+# With the Arduino plugged in (auto-detects the port, falls back to --sim):
 uv run python app.py
 
 # Force a specific port / baud:
@@ -55,68 +66,61 @@ npm run dev
 ```
 
 Open the printed URL (default <http://localhost:5173>). The dashboard connects to
-the backend WebSocket at `ws://localhost:8000/ws` automatically.
+the backend WebSocket at `ws://localhost:8000/ws` automatically and reconnects on
+its own.
 
 > Node isn't installed system-wide here — it was installed via **nvm**. In a new
-> terminal run `nvm use default` (or just `source ~/.nvm/nvm.sh`) before `npm`.
-
----
-
-## Plugging in YOUR ML model
-
-1. In Colab, export your trained model:
-   ```python
-   import joblib
-   joblib.dump(clf, "model.pkl")
-   # If you scaled features, save both so the backend applies the same scaling:
-   # joblib.dump({"model": clf, "scaler": scaler}, "model.pkl")
-   ```
-2. Drop `model.pkl` into `backend/`.
-3. Open `backend/config.py` and set **`MODEL_FEATURES`** to the *exact* column
-   order your model was trained on, and **`CLASS_LABELS`** (e.g.
-   `{0: "healthy", 1: "fault"}`).
-4. Restart the backend. The header shows **"ML model"** once it's loaded
-   (vs **"Heuristic model"** — the built-in rule-based fallback used until then).
-
-The backend calls `model.predict()` (and `predict_proba()` if available) per
-sample. Multi-class models work too — the predicted class name is shown as the
-fault type.
+> terminal run `nvm use default` (or `source ~/.nvm/nvm.sh`) before `npm`.
 
 ---
 
 ## Arduino telemetry format
 
-Your sketch just needs to `Serial.println()` one sample per line. The backend
-parser accepts **any** of these (pick the easiest):
+The sketch prints one current reading per line. The parser accepts any of:
 
 | Format | Example |
 |--------|---------|
-| CSV (lightest) | `1.23,12.0,45.6,1450,0.82,62.0,0.31` |
-| JSON | `{"current":1.23,"temperature":45.6,"rpm":1450}` |
-| key=value | `current=1.23 temperature=45.6 rpm=1450` |
+| single value (amps) | `0.0032` |
+| `time_us,current` (reference sketch) | `12345,0.0032` |
+| JSON | `{"current":0.0032}` |
 
-For CSV the column order must match `CSV_FIELDS` in `config.py`:
-`current, voltage, temperature, rpm, torque, load, vibration`.
+For multi-field CSV the current is taken from the **last** numeric field.
+Non-numeric lines (sketch debug output) are ignored.
 
-A ready-to-edit sketch is in [`backend/arduino_example/motor_telemetry.ino`](backend/arduino_example/motor_telemetry.ino).
-Set the baud rate to match `config.py` (default **115200**), and replace the
-sensor stubs with your real reads.
+The standalone batch demo from the original notebook still works against
+hardware that sends `time_us,current` lines terminated by an `END` marker:
 
-> You don't have to send all fields — send what you have. Missing fields are
-> shown as `—` and passed to the model as `0`. Edit `METRICS`/`CSV_FIELDS` in
-> `config.py` to match your motor's signals.
+```bash
+uv run python -m model.ml --port /dev/cu.usbmodem1101
+```
 
 ---
 
 ## Configuration
 
-Everything tunable lives in `backend/config.py` (also overridable via env vars):
+Everything tunable lives in [`backend/config.py`](backend/config.py) (also
+overridable via env vars):
 
 | Setting | What it does |
 |---------|--------------|
 | `SERIAL_PORT`, `BAUD_RATE` | UART connection |
-| `CSV_FIELDS` | column order for CSV telemetry |
-| `METRICS` | labels, units, and gauge ranges shown in the UI |
-| `MODEL_FEATURES`, `CLASS_LABELS` | how telemetry maps to your model |
-| `FAULT_THRESHOLD` | probability above which a fault alert fires |
+| `CSV_FIELDS` | telemetry column mapping |
+| `METRICS` | labels, units, ranges, and display precision shown in the UI |
 | `STREAM_HZ` | max WebSocket push rate |
+| `HISTORY_LEN` | readings kept for new clients |
+| `SIM_HZ` | simulator sample rate |
+
+Model constants (`WINDOW_SIZE`, `ROLLING_WINDOW`, `THRESHOLD`) live alongside the
+artifacts in [`backend/model/ml.py`](backend/model/ml.py).
+
+---
+
+## What you get
+
+- **Flask backend** (`backend/`) — reads current from the Arduino over UART (or
+  the simulator), runs the LSTM autoencoder on every sample, and broadcasts
+  predictions on a WebSocket. Falls back to a transparent current-threshold
+  heuristic if PyTorch/the model artifacts are unavailable.
+- **React dashboard** (`frontend/`) — health gauge, fault banner, live metric
+  tiles (current, current rise, reconstruction error), signal-history charts
+  with the fault threshold marked, and a fault-event log. Auto-reconnects.

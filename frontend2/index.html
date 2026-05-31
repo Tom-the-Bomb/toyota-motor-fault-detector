@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motor Fault Detection — Training Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+  <body>
+    <div class="page">
+      <!-- ───────────────────────── top bar ───────────────────────── -->
+      <header class="topbar">
+        <div class="wordmark">
+          <span class="mark"></span>
+          <span class="brand">TOYOTA</span>
+          <span class="sep"></span>
+          <span class="muted">Manufacturing · Motor Fault Detection</span>
+        </div>
+        <div class="status">
+          <span class="muted">Training report</span>
+          <span class="sep"></span>
+          <span class="muted mono">2026.05.31</span>
+        </div>
+      </header>
+
+      <!-- ───────────────────────── hero ───────────────────────── -->
+      <section class="hero">
+        <div class="hero-lede" data-reveal>
+          <p class="eyebrow">Manufacturing diagnostics</p>
+          <h1 class="display">
+            Motor faults from<br />
+            <em>current spikes</em>.
+          </h1>
+          <p class="lede-body">
+            An LSTM and autoencoder learn the motor's normal current draw from
+            <strong>159,467</strong> samples, then flag brief spikes above
+            <strong>0.05&nbsp;A</strong> as faults.
+          </p>
+        </div>
+
+        <aside class="hero-figure" data-reveal>
+          <p class="figure-label">fault rate after window expansion</p>
+          <div class="bignum display">2.907<span class="pct">%</span></div>
+          <p class="figure-sub mono">4,635 / 159,467 samples flagged</p>
+
+          <div class="propbar" aria-hidden="true">
+            <span class="seg seg-normal" style="width: 97.093%"></span>
+            <span class="seg seg-fault" style="width: 2.907%"></span>
+          </div>
+          <div class="proplegend">
+            <span><i class="swatch normal"></i>normal · 154,832</span>
+            <span><i class="swatch fault"></i>fault · 4,635</span>
+          </div>
+        </aside>
+      </section>
+
+      <!-- ───────────────────────── 01 · signal ───────────────────────── -->
+      <section class="band">
+        <div class="gutter"><span class="idx mono">01</span></div>
+        <div class="band-body">
+          <div class="section-head" data-reveal>
+            <h2>Signal &amp; fault zones</h2>
+            <p class="caption">
+              Current over the capture window. Threshold crossings are expanded
+              by <span class="mono">±25</span> steps to bound each fault event.
+            </p>
+          </div>
+
+          <figure class="chart chart-wide" data-reveal>
+            <div id="faultChart" class="svg-wrap"></div>
+            <figcaption class="legend">
+              <span><i class="line-key signal"></i>current_A</span>
+              <span
+                ><i class="line-key thr"></i>spike threshold · 0.05&nbsp;A</span
+              >
+              <span><i class="line-key zone"></i>fault zone</span>
+            </figcaption>
+          </figure>
+
+          <div class="notes-row">
+            <div class="note" data-reveal>
+              <span class="note-val mono">0.2102</span>
+              <span class="note-key">max rise above local mean (A)</span>
+            </div>
+            <div class="note" data-reveal>
+              <span class="note-val mono">−0.0000</span>
+              <span class="note-key">mean rise above local mean (A)</span>
+            </div>
+            <div class="note" data-reveal>
+              <span class="note-val mono">0.05</span>
+              <span class="note-key">fault threshold (A)</span>
+            </div>
+            <div class="note" data-reveal>
+              <span class="note-val mono">±36 ms</span>
+              <span class="note-key">window expansion (±25 steps)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────────── 02 · metrics ───────────────────────── -->
+      <section class="band">
+        <div class="gutter"><span class="idx mono">02</span></div>
+        <div class="band-body">
+          <div class="section-head" data-reveal>
+            <h2>At a glance</h2>
+            <p class="caption">Headline figures from the prepared dataset.</p>
+          </div>
+
+          <div class="metrics">
+            <div class="metric m-a" data-reveal>
+              <span class="metric-val mono">159,467</span>
+              <span class="metric-key">telemetry samples</span>
+            </div>
+            <div class="metric m-b" data-reveal>
+              <span class="metric-val mono">0.2126</span>
+              <span class="metric-key">peak current (A)</span>
+            </div>
+            <div class="metric m-c" data-reveal>
+              <span class="metric-val mono">222 s</span>
+              <span class="metric-key">capture span <em>· derived</em></span>
+            </div>
+            <div class="metric m-d" data-reveal>
+              <span class="metric-val mono">720 Hz</span>
+              <span class="metric-key">sample rate <em>· derived</em></span>
+            </div>
+            <div class="metric m-e" data-reveal>
+              <span class="metric-val mono">0.0030</span>
+              <span class="metric-key">mean current (A)</span>
+            </div>
+            <div class="metric m-f" data-reveal>
+              <span class="metric-val mono">20,000</span>
+              <span class="metric-key">autoencoder train samples</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────────── 03 · training ───────────────────────── -->
+      <section class="band">
+        <div class="gutter"><span class="idx mono">03</span></div>
+        <div class="band-body">
+          <div class="section-head" data-reveal>
+            <h2>Autoencoder training</h2>
+            <p class="caption">
+              Reconstruction MSE per epoch on 20,000 samples (down from
+              123,853). Marked points are logged checkpoints.
+            </p>
+          </div>
+
+          <div class="train-grid">
+            <figure class="chart" data-reveal>
+              <div id="lossChart" class="svg-wrap"></div>
+              <figcaption class="legend">
+                <span><i class="line-key signal"></i>reconstruction MSE</span>
+                <span><i class="line-key dot"></i>logged epoch</span>
+              </figcaption>
+            </figure>
+
+            <aside class="train-side" data-reveal>
+              <div class="train-final">
+                <span class="metric-val display"
+                  >7.9<span class="exp">×10⁻⁵</span></span
+                >
+                <span class="metric-key"
+                  >final reconstruction loss · epoch 20</span
+                >
+              </div>
+              <ul class="checklist mono">
+                <li><span>01/20</span><b>0.002135</b></li>
+                <li><span>06/20</span><b>0.000126</b></li>
+                <li><span>11/20</span><b>0.000079</b></li>
+                <li><span>16/20</span><b>0.000078</b></li>
+                <li><span>20/20</span><b>0.000079</b></li>
+              </ul>
+              <p class="caption">
+                Loss drops sharply over the first ~6 epochs — from 0.00214 to
+                0.00013 — then settles near 8×10⁻⁵ as normal current is learned
+                tightly.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────────── 04 · distribution ───────────────────────── -->
+      <section class="band">
+        <div class="gutter"><span class="idx mono">04</span></div>
+        <div class="band-body">
+          <div class="section-head" data-reveal>
+            <h2>Input distribution</h2>
+            <p class="caption">
+              Raw telemetry statistics and the post-expansion class balance.
+            </p>
+          </div>
+
+          <div class="dist-grid">
+            <table class="describe mono" data-reveal>
+              <thead>
+                <tr>
+                  <th>stat</th>
+                  <th>time_us</th>
+                  <th>current_A</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>count</td>
+                  <td>159,467</td>
+                  <td>159,467</td>
+                </tr>
+                <tr>
+                  <td>mean</td>
+                  <td>1.4189e8</td>
+                  <td>0.002991</td>
+                </tr>
+                <tr>
+                  <td>std</td>
+                  <td>6.4112e7</td>
+                  <td>0.003913</td>
+                </tr>
+                <tr>
+                  <td>min</td>
+                  <td>3.1088e7</td>
+                  <td>0.000000</td>
+                </tr>
+                <tr>
+                  <td>25%</td>
+                  <td>8.6283e7</td>
+                  <td>0.001099</td>
+                </tr>
+                <tr>
+                  <td>50%</td>
+                  <td>1.4187e8</td>
+                  <td>0.001343</td>
+                </tr>
+                <tr>
+                  <td>75%</td>
+                  <td>1.9752e8</td>
+                  <td>0.005983</td>
+                </tr>
+                <tr>
+                  <td>max</td>
+                  <td>2.5284e8</td>
+                  <td>0.212576</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="donut-card" data-reveal>
+              <div id="donut" class="svg-wrap"></div>
+              <p class="caption">
+                Heavily skewed toward normal operation — a
+                <strong>2.907%</strong> fault rate.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────────── 05 · classification report ───────────────────────── -->
+      <section class="band">
+        <div class="gutter"><span class="idx mono">05</span></div>
+        <div class="band-body">
+          <div class="section-head" data-reveal>
+            <h2>Classification report</h2>
+            <p class="caption">
+              Final per-class performance of the optimized fault classifier on a
+              31,884-sample hold-out set.
+            </p>
+          </div>
+
+          <div class="report-grid">
+            <table class="clsreport mono" data-reveal>
+              <thead>
+                <tr>
+                  <th>class</th>
+                  <th>precision</th>
+                  <th>recall</th>
+                  <th>f1-score</th>
+                  <th>support</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Normal</td>
+                  <td>0.98</td>
+                  <td>0.99</td>
+                  <td>0.99</td>
+                  <td>30,929</td>
+                </tr>
+                <tr class="r-fault">
+                  <td>Fault</td>
+                  <td>0.52</td>
+                  <td>0.51</td>
+                  <td>0.51</td>
+                  <td>955</td>
+                </tr>
+              </tbody>
+              <tbody class="summary">
+                <tr>
+                  <td>accuracy</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>0.97</td>
+                  <td>31,884</td>
+                </tr>
+                <tr>
+                  <td>macro avg</td>
+                  <td>0.75</td>
+                  <td>0.75</td>
+                  <td>0.75</td>
+                  <td>31,884</td>
+                </tr>
+                <tr>
+                  <td>weighted avg</td>
+                  <td>0.97</td>
+                  <td>0.97</td>
+                  <td>0.97</td>
+                  <td>31,884</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <aside class="report-side" data-reveal>
+              <div class="train-final">
+                <span class="metric-val display">0.97</span>
+                <span class="metric-key"
+                  >overall accuracy · 31,884 samples</span
+                >
+              </div>
+              <div class="report-stats">
+                <div>
+                  <span class="rs-v warn">0.51</span
+                  ><span class="rs-k">fault recall</span>
+                </div>
+                <div>
+                  <span class="rs-v warn">0.51</span
+                  ><span class="rs-k">fault F1</span>
+                </div>
+                <div>
+                  <span class="rs-v">0.75</span
+                  ><span class="rs-k">macro-avg F1</span>
+                </div>
+              </div>
+              <p class="caption">
+                Overall accuracy is carried by the dominant Normal class. Fault
+                detection is the hard part under heavy imbalance — only 955 of
+                31,884 samples — landing at 0.51 recall and 0.51 F1. Lifting
+                fault recall is the next target.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────────────────── footer ───────────────────────── -->
+      <footer class="foot">
+        <span class="muted">Motor fault detection · LSTM + autoencoder</span>
+      </footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

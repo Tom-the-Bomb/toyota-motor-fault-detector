@@ -1,14 +1,17 @@
 [project]
 name = "motor-fault-backend"
 version = "1.0.0"
-description = "Flask backend: reads motor telemetry over UART, runs the ML model, streams fault predictions over WebSocket"
-requires-python = ">=3.9"
+description = "Flask backend: reads motor telemetry over UART, runs the LSTM autoencoder fault model, streams predictions over WebSocket"
+# torch has no wheels for 3.14 yet, so cap below it.
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "flask>=3.0",
     "flask-sock>=0.7",
     "pyserial>=3.5",
-    # needed to load ML model
+    # ML model: PyTorch LSTM autoencoder + scikit-learn MinMaxScalers
+    "torch>=2.6",
     "scikit-learn>=1.3",
     "joblib>=1.3",
     "numpy>=1.24",
+    "pandas>=2.0",
 ]

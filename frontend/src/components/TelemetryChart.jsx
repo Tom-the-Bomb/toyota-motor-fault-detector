@@ -2,6 +2,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -10,6 +11,8 @@ import {
 
 const COLORS = {
   current: '#7aa2ff',
+  current_rise: '#c98aff',
+  error: '#ff5a8a',
   temperature: '#ff8a5a',
   rpm: '#2ee6a6',
   torque: '#c98aff',
@@ -19,13 +22,15 @@ const COLORS = {
 }
 
 // `metricKey` selects which telemetry field to plot from each history sample.
-export default function TelemetryChart({ history, metricKey, label, unit, faultMarks = true }) {
+export default function TelemetryChart({ history, metricKey, label, unit, decimals, threshold }) {
   const color = COLORS[metricKey] || '#7aa2ff'
   const data = history.map((s, i) => ({
     i,
     value: s.telemetry?.[metricKey] ?? null,
     fault: s.prediction === 'fault',
   }))
+  const fmt = (val) =>
+    typeof decimals === 'number' ? Number(val).toFixed(decimals) : Number(val).toFixed(2)
 
   return (
     <div className="chart-card">
@@ -45,11 +50,12 @@ export default function TelemetryChart({ history, metricKey, label, unit, faultM
             <CartesianGrid stroke="#1e2633" vertical={false} />
             <XAxis dataKey="i" hide />
             <YAxis
-              width={44}
+              width={52}
               tick={{ fill: '#7c8595', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               domain={['auto', 'auto']}
+              tickFormatter={fmt}
             />
             <Tooltip
               contentStyle={{
@@ -59,8 +65,16 @@ export default function TelemetryChart({ history, metricKey, label, unit, faultM
                 fontSize: 12,
               }}
               labelStyle={{ display: 'none' }}
-              formatter={(val) => [`${Number(val).toFixed(2)} ${unit}`, label]}
+              formatter={(val) => [`${fmt(val)} ${unit}`.trim(), label]}
             />
+            {threshold != null && (
+              <ReferenceLine
+                y={threshold}
+                stroke="#ff5a5a"
+                strokeDasharray="4 4"
+                strokeOpacity={0.8}
+              />
+            )}
             <Area
               type="monotone"
               dataKey="value"
